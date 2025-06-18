@@ -1,58 +1,80 @@
-# app1.py
+# app.py
 import streamlit as st
+import random
 
-# 임시 사전 데이터 (실제 배포 시 외부 API나 DB 연동 가능)
-korean_dict = {
-    "사랑": {
-        "뜻": "어떤 사람이나 존재를 몹시 아끼고 소중히 여기는 마음.",
-        "한자": ["愛"],
-        "예문": [
-            "그녀는 가족에 대한 사랑이 깊다.",
-            "사랑은 서로를 이해하고 존중하는 것이다.",
-            "첫사랑의 기억은 오래도록 남는다."
-        ]
-    },
-    "우정": {
-        "뜻": "친구 사이의 정이나 사랑.",
-        "한자": ["友情"],
-        "예문": [
-            "오랜 우정은 쉽게 깨지지 않는다.",
-            "우정을 지키는 것이 중요하다.",
-            "진실한 우정은 서로를 배려하는 데서 시작된다."
-        ]
-    },
-    "행복": {
-        "뜻": "기쁘고 즐거움. 또는 그러한 상태.",
-        "한자": ["幸福"],
-        "예문": [
-            "행복은 가까운 곳에 있다.",
-            "가족과 함께하는 시간이 가장 큰 행복이다.",
-            "행복은 마음먹기에 달려 있다."
-        ]
-    }
+# 단원별 예시 단어 데이터 (실제 크롤링 또는 파일 불러오기 대체 가능)
+unit_words = {
+    "Unit 1": [
+        {"word": "school", "meaning": "학교", "options": ["school", "park", "library", "hospital"]},
+        {"word": "teacher", "meaning": "선생님", "options": ["student", "teacher", "doctor", "driver"]},
+    ],
+    "Unit 2": [
+        {"word": "apple", "meaning": "사과", "options": ["banana", "grape", "apple", "peach"]},
+        {"word": "book", "meaning": "책", "options": ["pen", "notebook", "book", "eraser"]},
+    ]
 }
 
-st.set_page_config(page_title="국어 단어 사전", layout="centered")
-st.title("📘 국어 단어 사전 앱")
+st.set_page_config(page_title="5학년 영어 단어 퀴즈", layout="centered")
+st.title("📖 5학년 영어 단어 퀴즈")
 
-# 입력창
-word = st.text_input("단어를 입력하세요:")
+# 초기 상태 설정
+if 'page' not in st.session_state:
+    st.session_state.page = 'select_unit'
+    st.session_state.unit = None
+    st.session_state.quiz = []
+    st.session_state.current = 0
+    st.session_state.score = 0
+    st.session_state.wrong_try = 0
 
-if word:
-    if word in korean_dict:
-        data = korean_dict[word]
+# 유닛 선택 화면
+if st.session_state.page == 'select_unit':
+    st.subheader("단원을 선택하세요:")
+    unit = st.selectbox("단원", list(unit_words.keys()))
+    if st.button("시작하기"):
+        st.session_state.unit = unit
+        st.session_state.quiz = random.sample(unit_words[unit], min(10, len(unit_words[unit])))
+        st.session_state.page = 'quiz'
+        st.session_state.current = 0
+        st.session_state.score = 0
+        st.session_state.wrong_try = 0
+        st.experimental_rerun()
 
-        st.subheader("📖 뜻")
-        st.write(data["뜻"])
+# 퀴즈 풀이 화면
+elif st.session_state.page == 'quiz':
+    q = st.session_state.quiz[st.session_state.current]
+    st.subheader(f"문제 {st.session_state.current + 1}/10")
+    st.write(f"'**{q['meaning']}**'의 영어 단어는 무엇일까요?")
 
-        st.subheader("🈷️ 한자")
-        selected_hanja = st.radio("해당 단어의 한자를 선택하세요:", data["한자"])
+    for opt in q['options']:
+        if st.button(opt):
+            if opt == q['word']:
+                st.success("정답입니다!")
+                st.session_state.score += 1
+                st.session_state.current += 1
+                st.session_state.wrong_try = 0
+            else:
+                st.session_state.wrong_try += 1
+                if st.session_state.wrong_try >= 2:
+                    st.error(f"정답은 '{q['word']}'입니다.")
+                    st.info("이 단어들의 뜻도 함께 알아보아요:")
+                    for o in q['options']:
+                        st.write(f"- {o}: ... (의미를 여기에 입력하세요)")
+                    st.session_state.current += 1
+                    st.session_state.wrong_try = 0
+                else:
+                    st.warning("다시 한 번 생각해보세요!")
+            st.experimental_rerun()
 
-        st.subheader("📌 예문")
-        for example in data["예문"]:
-            st.write(f"- {example}")
+    if st.session_state.current >= len(st.session_state.quiz):
+        st.session_state.page = 'result'
+        st.experimental_rerun()
 
-        st.divider()
-        st.text_input("다시 단어를 입력하세요:", key="retry")
-    else:
-        st.warning("사전에 없는 단어입니다. 다른 단어를 입력해 보세요.")
+# 결과 화면
+elif st.session_state.page == 'result':
+    st.success(f"퀴즈 완료! 총 {st.session_state.score}문제 맞췄어요! 👏")
+    st.balloons()
+    if st.button("처음으로 돌아가기"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.experimental_rerun()
+
