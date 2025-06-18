@@ -34,22 +34,23 @@ if not st.session_state.questions:
     st.session_state.questions = generate_questions(10)
 
 if not st.session_state.finished:
-    q = st.session_state.questions[st.session_state.question_index]
-    st.subheader(f"문제 {st.session_state.question_index + 1}/10")
-    st.write(f"{q['a']} × {q['b']} = ?")
+    if st.session_state.question_index < 10:
+        q = st.session_state.questions[st.session_state.question_index]
+        st.subheader(f"문제 {st.session_state.question_index + 1}/10")
+        st.write(f"{q['a']} × {q['b']} = ?")
 
-    col1, col2, col3 = st.columns(3)
-    for i, opt in enumerate(q['options']):
-        with [col1, col2, col3][i]:
-            if st.button(str(opt), key=f"btn{st.session_state.question_index}-{i}"):
-                if opt == q['correct']:
-                    st.success("정답입니다! 🎉 축하합니다!")
-                    st.balloons()
-                    st.session_state.score += 1
-                    st.session_state.question_index += 1
-                else:
-                    st.warning("틀렸어요. 다시 도전해보세요! 💪")
-                st.experimental_retrun()
+        col1, col2, col3 = st.columns(3)
+        for i, opt in enumerate(q['options']):
+            with [col1, col2, col3][i]:
+                if st.button(str(opt), key=f"btn{st.session_state.question_index}-{i}"):
+                    if opt == q['correct']:
+                        st.success("정답입니다! 🎉 축하합니다!")
+                        st.balloons()
+                        st.session_state.score += 1
+                        st.session_state.question_index += 1
+                    else:
+                        st.warning("틀렸어요. 다시 도전해보세요! 💪")
+                    st.experimental_rerun()
 
     if st.session_state.question_index >= 10:
         st.session_state.finished = True
