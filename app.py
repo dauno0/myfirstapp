@@ -49,7 +49,7 @@ if not st.session_state.finished:
                     st.session_state.question_index += 1
                 else:
                     st.warning("틀렸어요. 다시 도전해보세요! 💪")
-                st.experimental_rerun()
+                st.experimental_retrun()
 
     if st.session_state.question_index >= 10:
         st.session_state.finished = True
